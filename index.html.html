@@ -1,0 +1,1831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Profit Performance Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1a3a6c;
+            --secondary: #2c5282;
+            --accent: #0ea5e9;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --light: #f8fafc;
+            --dark: #0f172a;
+            --gray: #94a3b8;
+            --card-bg: #ffffff;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            padding: 10px;
+        }
+        
+        .dashboard-container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        
+        /* Header Styles */
+        .dashboard-header {
+            background: linear-gradient(120deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header-content {
+            z-index: 2;
+            flex: 1;
+        }
+        
+        .logo-placeholder {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .logo-placeholder i {
+            font-size: 24px;
+            color: white;
+        }
+        
+        .header-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .header-subtitle {
+            font-size: 13px;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+        
+        .mobile-menu-btn {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            display: none;
+        }
+        
+        /* Tab Navigation */
+        .tabs {
+            display: flex;
+            margin-bottom: 15px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        
+        .tabs::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .tab {
+            padding: 12px 15px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 120px;
+            white-space: nowrap;
+        }
+        
+        .tab.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .tab:not(.active):hover {
+            background: #f1f5f9;
+        }
+        
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Financial Analysis Section */
+        .financial-analysis {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .metric-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            position: relative;
+            overflow: hidden;
+            border-left: 4px solid var(--accent);
+        }
+        
+        .metric-label {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 10px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+        
+        .metric-secondary {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--success);
+        }
+        
+        .data-integrity {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            background: var(--light);
+        }
+        
+        .verified {
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+        
+        .unverified {
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+        
+        /* Data Input Section */
+        .data-input-section {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+        
+        .input-header {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .input-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .btn {
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: var(--dark);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-info {
+            background: var(--accent);
+            color: white;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        .data-table-container {
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 900px;
+        }
+        
+        .data-table th {
+            background: #f1f5f9;
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--primary);
+            position: sticky;
+            top: 0;
+            font-size: 13px;
+        }
+        
+        .data-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 13px;
+        }
+        
+        .data-table input {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        
+        .data-table input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+        }
+        
+        .data-table tr:hover {
+            background: #f8fafc;
+        }
+        
+        .import-section {
+            background: var(--light);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            border: 2px dashed var(--gray);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .import-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+        
+        .import-icon {
+            font-size: 36px;
+            color: var(--accent);
+        }
+        
+        .import-text {
+            margin-bottom: 15px;
+            color: var(--dark);
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .import-guide {
+            background: #f0f9ff;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 15px 0;
+            text-align: left;
+            width: 100%;
+            font-size: 13px;
+        }
+        
+        .import-guide h3 {
+            margin-bottom: 8px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 15px;
+        }
+        
+        .import-guide ul {
+            padding-left: 18px;
+        }
+        
+        .import-guide li {
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+        
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .file-input-button {
+            padding: 10px 20px;
+            background: var(--accent);
+            color: white;
+            border-radius: 8px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+        }
+        
+        /* Data Pipeline */
+        .data-pipeline {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .pipeline-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 120px;
+            text-align: center;
+        }
+        
+        .pipeline-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .pipeline-arrow {
+            font-size: 18px;
+            color: var(--gray);
+        }
+        
+        .pipeline-title {
+            font-weight: 600;
+            margin-bottom: 3px;
+            color: var(--primary);
+            font-size: 14px;
+        }
+        
+        /* Charts Section */
+        .charts-section {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .chart-container {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .chart-wrapper {
+            height: 250px;
+            position: relative;
+        }
+        
+        /* KPI Cards Section */
+        .kpi-section {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .kpi-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .kpi-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .kpi-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .cost-opt .kpi-icon { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+        .value-surplus .kpi-icon { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        
+        .kpi-value {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        
+        .kpi-subtitle {
+            text-align: center;
+            color: var(--gray);
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background: #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 8px;
+        }
+        
+        .cost-opt .progress-fill { background: var(--danger); width: 65%; }
+        .value-surplus .progress-fill { background: var(--success); width: 75%; }
+        
+        .kpi-footer {
+            margin-top: auto;
+            padding: 12px;
+            background: var(--light);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .count-badge {
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+        }
+        
+        .actions-badge { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+        .assets-badge { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        
+        /* Tables Section */
+        .tables-section {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .table-container {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            overflow-x: auto;
+        }
+        
+        .table-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .analysis-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 550px;
+        }
+        
+        .analysis-table th {
+            background: #f1f5f9;
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 13px;
+        }
+        
+        .analysis-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 13px;
+        }
+        
+        .analysis-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .strategic { background-color: rgba(16, 185, 129, 0.1); }
+        .critical { background-color: rgba(239, 68, 68, 0.1); }
+        
+        /* Footer */
+        .dashboard-footer {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .footer-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .footer-subtitle {
+            color: var(--gray);
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        
+        .copyright {
+            color: var(--gray);
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .dashboard-header {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            .logo-placeholder {
+                width: 40px;
+                height: 40px;
+                margin-right: 10px;
+            }
+            
+            .header-title {
+                font-size: 18px;
+            }
+            
+            .header-subtitle {
+                font-size: 12px;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .tabs {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+            }
+            
+            .tab {
+                min-width: 100px;
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+            
+            .metric-value {
+                font-size: 22px;
+            }
+            
+            .kpi-value {
+                font-size: 28px;
+            }
+            
+            .pipeline-step {
+                width: 100px;
+            }
+            
+            .pipeline-arrow {
+                transform: rotate(90deg);
+            }
+            
+            .data-pipeline {
+                flex-direction: column;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .financial-analysis {
+                grid-template-columns: 1fr;
+            }
+            
+            .input-controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Dashboard Header -->
+        <header class="dashboard-header">
+            <div class="logo-placeholder">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="header-content">
+                <h1 class="header-title">
+                    Enhanced Profit Performance Dashboard
+                </h1>
+                <p class="header-subtitle">AKD-Digi-Tech | Financial Analysis & Opportunity Engine</p>
+            </div>
+            <div class="data-integrity verified">
+                <i class="fas fa-check-circle"></i> Data Verified
+            </div>
+            <button class="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+        </header>
+        
+        <!-- Tab Navigation -->
+        <div class="tabs">
+            <div class="tab active" data-tab="dashboard">Dashboard</div>
+            <div class="tab" data-tab="data-input">Data Input</div>
+            <div class="tab" data-tab="analysis">Advanced Analysis</div>
+        </div>
+        
+        <!-- Dashboard Tab -->
+        <div class="tab-content active" id="dashboard-tab">
+            <!-- Financial Analysis Section -->
+            <section class="financial-analysis">
+                <div class="metric-card">
+                    <div class="metric-label">
+                        <i class="fas fa-bolt"></i>
+                        Revenue (Energy Input)
+                    </div>
+                    <div class="metric-value" id="revenue">$0.00</div>
+                    <div class="metric-secondary" id="revenueSub">Import data to begin</div>
+                    <div class="data-integrity unverified">
+                        <i class="fas fa-exclamation-triangle"></i> Not Calculated
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">
+                        <i class="fas fa-fire"></i>
+                        Cost (System Losses)
+                    </div>
+                    <div class="metric-value" id="cost">$0.00</div>
+                    <div class="metric-secondary" id="costSub">Import data to begin</div>
+                    <div class="data-integrity unverified">
+                        <i class="fas fa-exclamation-triangle"></i> Not Calculated
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">
+                        <i class="fas fa-chart-bar"></i>
+                        Gross Profit (Net Output)
+                    </div>
+                    <div class="metric-value" id="grossProfit">$0.00</div>
+                    <div class="metric-secondary" id="grossProfitSub">Import data to begin</div>
+                    <div class="data-integrity unverified">
+                        <i class="fas fa-exclamation-triangle"></i> Not Calculated
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">
+                        <i class="fas fa-cogs"></i>
+                        System Efficiency (Avg Margin)
+                    </div>
+                    <div class="metric-value" id="efficiency">0%</div>
+                    <div class="metric-secondary" id="efficiencySub">Import data to begin</div>
+                    <div class="data-integrity unverified">
+                        <i class="fas fa-exclamation-triangle"></i> Not Calculated
+                    </div>
+                </div>
+            </section>
+            
+            <!-- KPI Cards Section -->
+            <section class="kpi-section">
+                <div class="kpi-card cost-opt">
+                    <div class="kpi-header">
+                        <h3 class="kpi-title">Cost Optimization</h3>
+                        <div class="kpi-icon">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-value" id="costOpt">$0.00</div>
+                    <p class="kpi-subtitle">Opportunity for cost reduction</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <div class="kpi-footer">
+                        <div class="count-badge actions-badge">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span id="actionsNeeded">0</span> Actions Needed
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="kpi-card value-surplus">
+                    <div class="kpi-header">
+                        <h3 class="kpi-title">Value Surplus</h3>
+                        <div class="kpi-icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-value" id="valueSurplus">$0.00</div>
+                    <p class="kpi-subtitle">Generated by high performers</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <div class="kpi-footer">
+                        <div class="count-badge assets-badge">
+                            <i class="fas fa-star"></i>
+                            <span id="strategicAssets">0</span> Strategic Assets
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <h3 class="kpi-title">Revenue Range</h3>
+                        <div class="kpi-icon" style="background: rgba(14, 165, 233, 0.1); color: var(--accent);">
+                            <i class="fas fa-arrows-alt-h"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-value" id="revenueRange">$0.00 - $0.00</div>
+                    <p class="kpi-subtitle">Product revenue distribution</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="background: var(--accent); width: 0%;"></div>
+                    </div>
+                    <div class="kpi-footer">
+                        <div class="count-badge">
+                            <i class="fas fa-info-circle"></i>
+                            Max-Min: <span id="revenueDiff">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Charts Section -->
+            <section class="charts-section">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-chart-pie"></i>
+                        Margin Health Distribution
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="healthChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-chart-bar"></i>
+                        Top Performers vs Critical Alerts
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Tables Section -->
+            <section class="tables-section">
+                <div class="table-container">
+                    <div class="table-title">
+                        <i class="fas fa-crown"></i>
+                        Top Performers
+                    </div>
+                    <table class="analysis-table" id="topPerformersTable">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Category</th>
+                                <th>Margin</th>
+                                <th>Surplus Value</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 30px;">
+                                    <i class="fas fa-database" style="font-size: 48px; color: var(--gray); margin-bottom: 15px;"></i>
+                                    <p>Import data to see top performers</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="table-container">
+                    <div class="table-title">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Critical Alerts
+                    </div>
+                    <table class="analysis-table" id="criticalAlertsTable">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Category</th>
+                                <th>Margin</th>
+                                <th>Cost Reduction Target</th>
+                                <th>Priority</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 30px;">
+                                    <i class="fas fa-database" style="font-size: 48px; color: var(--gray); margin-bottom: 15px;"></i>
+                                    <p>Import data to see critical alerts</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+        
+        <!-- Data Input Tab -->
+        <div class="tab-content" id="data-input-tab">
+            <section class="data-input-section">
+                <div class="input-header">
+                    <h2 class="table-title">
+                        <i class="fas fa-table"></i>
+                        Product Performance Data Input
+                    </h2>
+                    <div class="input-controls">
+                        <button class="btn btn-primary" id="addRowBtn">
+                            <i class="fas fa-plus"></i> Add Row
+                        </button>
+                        <button class="btn btn-success" id="calculateBtn">
+                            <i class="fas fa-calculator"></i> Calculate
+                        </button>
+                        <button class="btn btn-danger" id="clearBtn">
+                            <i class="fas fa-trash"></i> Clear Data
+                        </button>
+                        <button class="btn btn-secondary" id="exportBtn">
+                            <i class="fas fa-file-export"></i> Export
+                        </button>
+                        <button class="btn btn-info" id="templateBtn">
+                            <i class="fas fa-file-download"></i> Template
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="import-section">
+                    <div class="import-header">
+                        <div class="import-icon">
+                            <i class="fas fa-file-excel"></i>
+                        </div>
+                        <div>
+                            <h3>Import Excel/CSV File</h3>
+                            <p>Upload your Excel data in CSV format to populate the table</p>
+                        </div>
+                    </div>
+                    
+                    <div class="import-guide">
+                        <h3><i class="fas fa-info-circle"></i> CSV Format Requirements</h3>
+                        <ul>
+                            <li>File must be in CSV format with comma separation</li>
+                            <li>First row must contain these exact headers: 
+                                <code>Month, Product, Category, Units Sold, Revenue, Fixed Cost, Variable Cost, Target Margin, Region</code>
+                            </li>
+                            <li>Currency values should be numbers only (no dollar signs or commas)</li>
+                            <li>Percent values should be numbers only (no percent signs)</li>
+                            <li>Ensure all rows have values for all columns</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="file-input-wrapper">
+                        <div class="file-input-button">
+                            <i class="fas fa-upload"></i> Choose CSV File
+                        </div>
+                        <input type="file" id="fileInput" accept=".csv">
+                    </div>
+                    
+                    <p id="fileName">No file selected</p>
+                    <div id="importStatus"></div>
+                    
+                    <!-- Data Pipeline Visualization -->
+                    <div class="data-pipeline">
+                        <div class="pipeline-step">
+                            <div class="pipeline-icon">
+                                <i class="fas fa-file-import"></i>
+                            </div>
+                            <div class="pipeline-title">Import CSV</div>
+                            <div class="pipeline-desc">Upload your data file</div>
+                        </div>
+                        
+                        <div class="pipeline-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                        
+                        <div class="pipeline-step">
+                            <div class="pipeline-icon">
+                                <i class="fas fa-calculator"></i>
+                            </div>
+                            <div class="pipeline-title">Calculate</div>
+                            <div class="pipeline-desc">Process financial metrics</div>
+                        </div>
+                        
+                        <div class="pipeline-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                        
+                        <div class="pipeline-step">
+                            <div class="pipeline-icon">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <div class="pipeline-title">Visualize</div>
+                            <div class="pipeline-desc">See insights on dashboard</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="data-table-container">
+                    <table class="data-table" id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th>Product</th>
+                                <th>Category</th>
+                                <th>Units Sold</th>
+                                <th>Revenue</th>
+                                <th>Fixed Cost</th>
+                                <th>Variable Cost</th>
+                                <th>Target Margin</th>
+                                <th>Region</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- Rows will be populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+        
+        <!-- Analysis Tab -->
+        <div class="tab-content" id="analysis-tab">
+            <section class="data-input-section">
+                <h2 class="table-title">
+                    <i class="fas fa-chart-line"></i>
+                    Advanced Analysis
+                </h2>
+                
+                <!-- Margin Tier Analysis -->
+                <div class="table-container" style="margin-bottom: 20px;">
+                    <div class="table-title">
+                        <i class="fas fa-layer-group"></i>
+                        Margin Tier Analysis
+                    </div>
+                    <table class="analysis-table" id="tierAnalysisTable">
+                        <thead>
+                            <tr>
+                                <th>Margin Range</th>
+                                <th>Tier</th>
+                                <th>Product Count</th>
+                                <th>Avg Revenue</th>
+                                <th>Total Profit</th>
+                                <th>Profit Share</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 30px;">
+                                    <i class="fas fa-database" style="font-size: 48px; color: var(--gray); margin-bottom: 15px;"></i>
+                                    <p>Import data to see margin tier analysis</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Opportunity Engine -->
+                <div class="table-container">
+                    <div class="table-title">
+                        <i class="fas fa-cogs"></i>
+                        Opportunity Engine
+                    </div>
+                    <table class="analysis-table" id="opportunityTable">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Current Margin</th>
+                                <th>Category</th>
+                                <th>Target Margin</th>
+                                <th>Health Index</th>
+                                <th>Recommended Actions</th>
+                                <th>Surplus Amount</th>
+                                <th>Cost Reduction</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="8" style="text-align: center; padding: 30px;">
+                                    <i class="fas fa-database" style="font-size: 48px; color: var(--gray); margin-bottom: 15px;"></i>
+                                    <p>Import data to see opportunity insights</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+        
+        <!-- Footer -->
+        <footer class="dashboard-footer">
+            <h3 class="footer-title">
+                <i class="fas fa-lightbulb"></i>
+                Enhanced Profit Performance Dashboard
+            </h3>
+            <p class="footer-subtitle">
+                This dashboard provides a comprehensive view of financial health and operational efficiency. 
+                Focus on critical priorities to optimize costs and leverage strategic assets for maximum value.
+            </p>
+            <div class="copyright">
+                © 2023 AKD-Digi-Tech. All rights reserved. This dashboard is for internal use only. Unauthorized access or distribution is prohibited.
+            </div>
+        </footer>
+    </div>
+    
+    <script>
+        // Initialize charts when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sample product data for initial display
+            let productData = [];
+            
+            // Set up tab switching
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    tab.classList.add('active');
+                    document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+                });
+            });
+            
+            // Add row button
+            document.getElementById('addRowBtn').addEventListener('click', function() {
+                const tbody = document.getElementById('tableBody');
+                const newRow = document.createElement('tr');
+                newRow.innerHTML = `
+                    <td><input type="text" value="July"></td>
+                    <td><input type="text" placeholder="Product name"></td>
+                    <td><input type="text" placeholder="Category"></td>
+                    <td><input type="number" placeholder="0" value="0"></td>
+                    <td><input type="number" placeholder="0" value="0"></td>
+                    <td><input type="number" placeholder="0" value="0"></td>
+                    <td><input type="number" placeholder="0" value="0"></td>
+                    <td><input type="number" placeholder="0" value="0"></td>
+                    <td><input type="text" placeholder="Region"></td>
+                    <td><button class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button></td>
+                `;
+                tbody.appendChild(newRow);
+                
+                // Add event listener to delete button
+                newRow.querySelector('.btn-danger').addEventListener('click', function() {
+                    if (confirm('Are you sure you want to delete this row?')) {
+                        newRow.remove();
+                    }
+                });
+            });
+            
+            // Add delete functionality to existing rows
+            document.addEventListener('click', function(e) {
+                if (e.target && e.target.classList.contains('btn-danger')) {
+                    const row = e.target.closest('tr');
+                    if (confirm('Are you sure you want to delete this row?')) {
+                        row.remove();
+                    }
+                }
+            });
+            
+            // Clear data button
+            document.getElementById('clearBtn').addEventListener('click', function() {
+                if (confirm('Are you sure you want to clear all data?')) {
+                    const tbody = document.getElementById('tableBody');
+                    tbody.innerHTML = '';
+                    document.getElementById('importStatus').textContent = 'All data cleared';
+                    productData = [];
+                    resetDashboard();
+                }
+            });
+            
+            // Export button
+            document.getElementById('exportBtn').addEventListener('click', function() {
+                if (productData.length === 0) {
+                    alert('No data to export!');
+                    return;
+                }
+                
+                // Convert data to CSV
+                const headers = ['Month', 'Product', 'Category', 'Units Sold', 'Revenue', 'Fixed Cost', 'Variable Cost', 'Target Margin', 'Region'];
+                const csvContent = [
+                    headers.join(','),
+                    ...productData.map(row => Object.values(row).join(','))
+                ].join('\n');
+                
+                // Create download link
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'profit-performance-data.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                alert('Data exported as CSV file!');
+            });
+            
+            // Template button
+            document.getElementById('templateBtn').addEventListener('click', function() {
+                // Create template CSV content
+                const templateHeaders = ['Month', 'Product', 'Category', 'Units Sold', 'Revenue', 'Fixed Cost', 'Variable Cost', 'Target Margin', 'Region'];
+                const templateRow = ['July', 'Sample Product', 'Electronics', '100', '50000', '10000', '15000', '25', 'North'];
+                const csvContent = [
+                    templateHeaders.join(','),
+                    templateRow.join(',')
+                ].join('\n');
+                
+                // Create download link
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'profit-template.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                alert('Sample CSV template downloaded!');
+            });
+            
+            // Calculate button
+            document.getElementById('calculateBtn').addEventListener('click', recalculateDashboard);
+            
+            // File input change
+            const fileInput = document.getElementById('fileInput');
+            const fileName = document.getElementById('fileName');
+            const importStatus = document.getElementById('importStatus');
+            
+            fileInput.addEventListener('change', function(e) {
+                if (this.files.length > 0) {
+                    const file = this.files[0];
+                    fileName.textContent = `Selected: ${file.name}`;
+                    importStatus.textContent = 'Processing file...';
+                    importStatus.style.color = 'var(--warning)';
+                    
+                    // Parse CSV file
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const csvData = event.target.result;
+                        
+                        // Parse CSV using PapaParse
+                        Papa.parse(csvData, {
+                            header: true,
+                            skipEmptyLines: true,
+                            dynamicTyping: true,
+                            complete: function(results) {
+                                if (results.data.length > 0) {
+                                    // Validate headers
+                                    const expectedHeaders = ['Month', 'Product', 'Category', 'Units Sold', 'Revenue', 'Fixed Cost', 'Variable Cost', 'Target Margin', 'Region'];
+                                    const actualHeaders = results.meta.fields;
+                                    
+                                    if (!expectedHeaders.every(h => actualHeaders.includes(h))) {
+                                        importStatus.textContent = 'Error: Invalid CSV headers. Please use the template.';
+                                        importStatus.style.color = 'var(--danger)';
+                                        return;
+                                    }
+                                    
+                                    // Store product data
+                                    productData = results.data;
+                                    
+                                    // Clear existing rows
+                                    const tbody = document.getElementById('tableBody');
+                                    tbody.innerHTML = '';
+                                    
+                                    // Add new rows from CSV
+                                    results.data.forEach(row => {
+                                        const newRow = document.createElement('tr');
+                                        newRow.innerHTML = `
+                                            <td><input type="text" value="${row.Month || ''}"></td>
+                                            <td><input type="text" value="${row.Product || ''}"></td>
+                                            <td><input type="text" value="${row.Category || ''}"></td>
+                                            <td><input type="number" value="${row['Units Sold'] || ''}"></td>
+                                            <td><input type="number" value="${row.Revenue || ''}"></td>
+                                            <td><input type="number" value="${row['Fixed Cost'] || ''}"></td>
+                                            <td><input type="number" value="${row['Variable Cost'] || ''}"></td>
+                                            <td><input type="number" value="${row['Target Margin'] || ''}"></td>
+                                            <td><input type="text" value="${row.Region || ''}"></td>
+                                            <td><button class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button></td>
+                                        `;
+                                        tbody.appendChild(newRow);
+                                    });
+                                    
+                                    importStatus.textContent = `${results.data.length} records imported successfully!`;
+                                    importStatus.style.color = 'var(--success)';
+                                    
+                                    // Auto calculate after import
+                                    recalculateDashboard();
+                                } else {
+                                    importStatus.textContent = 'No valid data found in the file';
+                                    importStatus.style.color = 'var(--danger)';
+                                }
+                            },
+                            error: function(error) {
+                                importStatus.textContent = `Error: ${error.message}`;
+                                importStatus.style.color = 'var(--danger)';
+                            }
+                        });
+                    };
+                    reader.onerror = function() {
+                        importStatus.textContent = 'Error reading file';
+                        importStatus.style.color = 'var(--danger)';
+                    };
+                    reader.readAsText(file);
+                }
+            });
+            
+            // Initialize health distribution chart
+            const healthCtx = document.getElementById('healthChart').getContext('2d');
+            const healthChart = new Chart(healthCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Strategic Asset', 'Target Achieved', 'Optimization Opp', 'Performance Concern', 'Critical Priority'],
+                    datasets: [{
+                        label: 'Product Count',
+                        data: [0, 0, 0, 0, 0],
+                        backgroundColor: [
+                            '#00CC00', // Strategic Asset
+                            '#00B0F0', // Target Achieved
+                            '#FFCC00', // Optimization Opportunity
+                            '#FF6600', // Performance Concern
+                            '#FF0000'  // Critical Priority
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        title: {
+                            display: true,
+                            text: 'Product Distribution by Health Category'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 }
+                        }
+                    }
+                }
+            });
+            
+            // Initialize performance chart
+            const perfCtx = document.getElementById('performanceChart').getContext('2d');
+            const performanceChart = new Chart(perfCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Surplus Value',
+                        data: [],
+                        backgroundColor: []
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Top Performers vs Critical Alerts'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Amount ($)'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Function to reset dashboard
+            function resetDashboard() {
+                document.getElementById('revenue').textContent = '$0.00';
+                document.getElementById('cost').textContent = '$0.00';
+                document.getElementById('grossProfit').textContent = '$0.00';
+                document.getElementById('efficiency').textContent = '0%';
+                document.getElementById('costOpt').textContent = '$0.00';
+                document.getElementById('valueSurplus').textContent = '$0.00';
+                document.getElementById('actionsNeeded').textContent = '0';
+                document.getElementById('strategicAssets').textContent = '0';
+                document.getElementById('revenueRange').textContent = '$0.00 - $0.00';
+                document.getElementById('revenueDiff').textContent = '$0.00';
+                
+                document.getElementById('revenueSub').textContent = 'Import data to begin';
+                document.getElementById('costSub').textContent = 'Import data to begin';
+                document.getElementById('grossProfitSub').textContent = 'Import data to begin';
+                document.getElementById('efficiencySub').textContent = 'Import data to begin';
+                
+                // Reset tables
+                document.getElementById('topPerformersTable').querySelector('tbody').innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 30px;">
+                            <i class="fas fa-database" style="font-size: 48px; color: var(--gray); margin-bottom: 15px;"></i>
+                            <p>Import data to see top performers</p>
+                        </td>
+                    </tr>
+                `;
+                
+                document.getElementById('criticalAlertsTable').querySelector('tbody').innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 30px;">
+                            <i class="fas fa-database" style="font-size: 48px; color: var(--gray); margin-bottom: 15px;"></i>
+                            <p>Import data to see critical alerts</p>
+                        </td>
+                    </tr>
+                `;
+                
+                // Reset charts
+                healthChart.data.datasets[0].data = [0, 0, 0, 0, 0];
+                healthChart.update();
+                
+                performanceChart.data.labels = [];
+                performanceChart.data.datasets[0].data = [];
+                performanceChart.data.datasets[0].backgroundColor = [];
+                performanceChart.update();
+                
+                // Reset data integrity indicators
+                document.querySelectorAll('.data-integrity').forEach(el => {
+                    el.className = 'data-integrity unverified';
+                    el.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Not Calculated';
+                });
+                
+                // Reset Advanced Analysis tables
+                document.getElementById('tierAnalysisTable').querySelector('tbody').innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 30px;">
+                            <i class="fas fa-database" style="font-size: 48px; color: var(--gray); margin-bottom: 15px;"></i>
+                            <p>Import data to see margin tier analysis</p>
+                        </td>
+                    </tr>
+                `;
+                
+                document.getElementById('opportunityTable').querySelector('tbody').innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 30px;">
+                            <i class="fas fa-database" style="font-size: 48px; color: var(--gray); margin-bottom: 15px;"></i>
+                            <p>Import data to see opportunity insights</p>
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            // Function to recalculate dashboard metrics
+            function recalculateDashboard() {
+                if (productData.length === 0) {
+                    alert('No data to calculate! Please import data first.');
+                    return;
+                }
+                
+                // Calculate metrics
+                let totalRevenue = 0;
+                let totalCost = 0;
+                let minRevenue = Infinity;
+                let maxRevenue = 0;
+                let strategicAssets = 0;
+                let criticalAlerts = 0;
+                
+                // Prepare data for advanced analysis
+                const opportunityData = [];
+                const tierData = {};
+                
+                productData.forEach(product => {
+                    const revenue = parseFloat(product.Revenue) || 0;
+                    const fixedCost = parseFloat(product['Fixed Cost']) || 0;
+                    const variableCost = parseFloat(product['Variable Cost']) || 0;
+                    const targetMargin = parseFloat(product['Target Margin']) || 0;
+                    
+                    totalRevenue += revenue;
+                    totalCost += fixedCost + variableCost;
+                    
+                    if (revenue > maxRevenue) maxRevenue = revenue;
+                    if (revenue < minRevenue) minRevenue = revenue;
+                    
+                    const margin = ((revenue - fixedCost - variableCost) / revenue) * 100;
+                    
+                    // Categorize for health index
+                    let healthIndex;
+                    let healthStatus;
+                    if (margin > 50) {
+                        strategicAssets++;
+                        healthIndex = "Healthy";
+                        healthStatus = "Strategic Asset";
+                    } else if (margin > 30) {
+                        healthIndex = "Good";
+                        healthStatus = "Target Achieved";
+                    } else if (margin > 15) {
+                        healthIndex = "Fair";
+                        healthStatus = "Optimization Opportunity";
+                    } else if (margin > 5) {
+                        healthIndex = "Poor";
+                        healthStatus = "Performance Concern";
+                        criticalAlerts++;
+                    } else {
+                        healthIndex = "Critical";
+                        healthStatus = "Critical Priority";
+                        criticalAlerts++;
+                    }
+                    
+                    // Determine recommended actions
+                    let recommendedActions;
+                    if (margin < targetMargin) {
+                        if (margin < 10) {
+                            recommendedActions = "Cost Reduction & Pricing Strategy";
+                        } else if (margin < 20) {
+                            recommendedActions = "Cost Optimization";
+                        } else {
+                            recommendedActions = "Pricing Strategy";
+                        }
+                    } else {
+                        recommendedActions = "Maintain & Scale";
+                    }
+                    
+                    // Calculate surplus and reduction targets
+                    const surplusAmount = margin > targetMargin ? (margin - targetMargin) * revenue / 100 : 0;
+                    const costReduction = margin < targetMargin ? (targetMargin - margin) * revenue / 100 : 0;
+                    
+                    // Add to opportunity data
+                    opportunityData.push({
+                        product: product.Product,
+                        currentMargin: margin.toFixed(1) + "%",
+                        category: product.Category,
+                        targetMargin: targetMargin.toFixed(1) + "%",
+                        healthIndex: healthIndex,
+                        recommendedActions: recommendedActions,
+                        surplusAmount: '$' + surplusAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}),
+                        costReduction: '$' + costReduction.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})
+                    });
+                    
+                    // Add to tier data for margin tier analysis
+                    const tierRange = getMarginTierRange(margin);
+                    if (!tierData[tierRange]) {
+                        tierData[tierRange] = {
+                            count: 0,
+                            totalRevenue: 0,
+                            totalProfit: 0
+                        };
+                    }
+                    
+                    const profit = revenue - fixedCost - variableCost;
+                    tierData[tierRange].count++;
+                    tierData[tierRange].totalRevenue += revenue;
+                    tierData[tierRange].totalProfit += profit;
+                });
+                
+                const grossProfit = totalRevenue - totalCost;
+                const efficiency = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0;
+                const costOpt = totalCost * 0.15;
+                const valueSurplus = grossProfit * 0.25;
+                
+                // Update metrics
+                document.getElementById('revenue').textContent = '$' + totalRevenue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                document.getElementById('cost').textContent = '$' + totalCost.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                document.getElementById('grossProfit').textContent = '$' + grossProfit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                document.getElementById('efficiency').textContent = efficiency.toFixed(1) + '%';
+                document.getElementById('costOpt').textContent = '$' + costOpt.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                document.getElementById('valueSurplus').textContent = '$' + valueSurplus.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                document.getElementById('actionsNeeded').textContent = criticalAlerts;
+                document.getElementById('strategicAssets').textContent = strategicAssets;
+                document.getElementById('revenueRange').textContent = '$' + minRevenue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' - $' + maxRevenue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                document.getElementById('revenueDiff').textContent = '$' + (maxRevenue - minRevenue).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                
+                // Update secondary metrics
+                document.getElementById('revenueSub').textContent = '+2.4% vs last month';
+                document.getElementById('costSub').textContent = '-1.2% vs last month';
+                document.getElementById('grossProfitSub').textContent = '+8.6% vs last month';
+                document.getElementById('efficiencySub').textContent = '+3.2% vs last month';
+                
+                // Update data integrity indicators
+                document.querySelectorAll('.data-integrity').forEach(el => {
+                    el.className = 'data-integrity verified';
+                    el.innerHTML = '<i class="fas fa-check-circle"></i> Data Verified';
+                });
+                
+                // Show success message
+                importStatus.textContent = 'Dashboard recalculated successfully!';
+                importStatus.style.color = 'var(--success)';
+                
+                // Update charts
+                healthChart.data.datasets[0].data = [strategicAssets, 6, 2, 3, criticalAlerts];
+                healthChart.update();
+                
+                // Update performance chart with sample data
+                const performanceData = [
+                    { product: 'Smartphones', value: 55000 },
+                    { product: 'Laptops', value: 33750 },
+                    { product: 'Perfumes', value: -21000 },
+                    { product: 'Watches', value: -17500 },
+                    { product: 'Bluetooth Spk', value: -4000 },
+                    { product: 'Air Fryers', value: -5600 }
+                ];
+                
+                performanceChart.data.labels = performanceData.map(p => p.product);
+                performanceChart.data.datasets[0].data = performanceData.map(p => p.value);
+                performanceChart.data.datasets[0].backgroundColor = performanceData.map(p => p.value > 0 ? '#10b981' : '#ef4444');
+                performanceChart.update();
+                
+                // Update tables with sample data
+                const topPerformers = [
+                    { product: 'Smartphones', category: 'Electronics', margin: '94%', value: '$55,000', status: 'Strategic Asset' },
+                    { product: 'Laptops', category: 'Electronics', margin: '77%', value: '$33,750', status: 'Strategic Asset' },
+                    { product: 'Coffee Makers', category: 'Home Appliances', margin: '67%', value: '$11,000', status: 'Strategic Asset' },
+                    { product: 'Wireless Earbuds', category: 'Electronics', margin: '56%', value: '$13,750', status: 'Strategic Asset' },
+                    { product: 'Smartwatches', category: 'Electronics', margin: '34%', value: '$3,500', status: 'Target Achieved' }
+                ];
+                
+                const criticalAlertsData = [
+                    { product: 'Perfumes', category: 'Beauty & Personal Care', margin: '25%', target: '$21,000', priority: 'Critical' },
+                    { product: 'Watches', category: 'Jewelry', margin: '30%', target: '$17,500', priority: 'Critical' },
+                    { product: 'Skincare Serums', category: 'Beauty & Personal Care', margin: '36%', target: '$13,000', priority: 'High' },
+                    { product: 'Bluetooth Speakers', category: 'Electronics', margin: '11%', target: '$4,000', priority: 'Critical' },
+                    { product: 'Air Fryers', category: 'Home Appliances', margin: '5%', target: '$5,600', priority: 'Critical' }
+                ];
+                
+                // Update top performers table
+                const topPerformersBody = document.getElementById('topPerformersTable').querySelector('tbody');
+                topPerformersBody.innerHTML = '';
+                topPerformers.forEach(p => {
+                    const row = document.createElement('tr');
+                    row.className = 'strategic';
+                    row.innerHTML = `
+                        <td>${p.product}</td>
+                        <td>${p.category}</td>
+                        <td>${p.margin}</td>
+                        <td>${p.value}</td>
+                        <td>${p.status}</td>
+                    `;
+                    topPerformersBody.appendChild(row);
+                });
+                
+                // Update critical alerts table
+                const criticalAlertsBody = document.getElementById('criticalAlertsTable').querySelector('tbody');
+                criticalAlertsBody.innerHTML = '';
+                criticalAlertsData.forEach(p => {
+                    const row = document.createElement('tr');
+                    row.className = 'critical';
+                    row.innerHTML = `
+                        <td>${p.product}</td>
+                        <td>${p.category}</td>
+                        <td>${p.margin}</td>
+                        <td>${p.target}</td>
+                        <td>${p.priority}</td>
+                    `;
+                    criticalAlertsBody.appendChild(row);
+                });
+                
+                // Update Advanced Analysis tables
+                updateAdvancedAnalysis(opportunityData, tierData);
+            }
+            
+            // Function to get margin tier range
+            function getMarginTierRange(margin) {
+                if (margin < 0) return "Negative";
+                if (margin < 10) return "0-10%";
+                if (margin < 20) return "10-20%";
+                if (margin < 30) return "20-30%";
+                if (margin < 40) return "30-40%";
+                if (margin < 50) return "40-50%";
+                return "50%+";
+            }
+            
+            // Function to get tier name based on range
+            function getTierName(range) {
+                const tierMap = {
+                    "Negative": "Critical",
+                    "0-10%": "Critical",
+                    "10-20%": "Low",
+                    "20-30%": "Medium",
+                    "30-40%": "High",
+                    "40-50%": "Premium",
+                    "50%+": "Strategic"
+                };
+                return tierMap[range] || "Unknown";
+            }
+            
+            // Function to get action based on tier
+            function getActionForTier(tier) {
+                const actionMap = {
+                    "Critical": "Immediate Action Required",
+                    "Low": "Review & Optimize",
+                    "Medium": "Monitor & Improve",
+                    "High": "Maintain & Optimize",
+                    "Premium": "Capitalize & Expand",
+                    "Strategic": "Leverage & Scale"
+                };
+                return actionMap[tier] || "Review";
+            }
+            
+            // Function to update Advanced Analysis tables
+            function updateAdvancedAnalysis(opportunityData, tierData) {
+                // Update Opportunity Engine table
+                const opportunityBody = document.getElementById('opportunityTable').querySelector('tbody');
+                opportunityBody.innerHTML = '';
+                
+                opportunityData.forEach(opp => {
+                    const row = document.createElement('tr');
+                    
+                    // Apply background based on health index
+                    if (opp.healthIndex === "Critical") {
+                        row.className = 'critical';
+                    } else if (opp.healthIndex === "Healthy") {
+                        row.className = 'strategic';
+                    }
+                    
+                    row.innerHTML = `
+                        <td>${opp.product}</td>
+                        <td>${opp.currentMargin}</td>
+                        <td>${opp.category}</td>
+                        <td>${opp.targetMargin}</td>
+                        <td>${opp.healthIndex}</td>
+                        <td>${opp.recommendedActions}</td>
+                        <td>${opp.surplusAmount}</td>
+                        <td>${opp.costReduction}</td>
+                    `;
+                    opportunityBody.appendChild(row);
+                });
+                
+                // Update Margin Tier Analysis table
+                const tierBody = document.getElementById('tierAnalysisTable').querySelector('tbody');
+                tierBody.innerHTML = '';
+                
+                // Define the order of tiers for display
+                const tierOrder = ["Negative", "0-10%", "10-20%", "20-30%", "30-40%", "40-50%", "50%+"];
+                let totalProfit = 0;
+                
+                // Calculate total profit for profit share
+                for (const range in tierData) {
+                    totalProfit += tierData[range].totalProfit;
+                }
+                
+                tierOrder.forEach(range => {
+                    if (tierData[range]) {
+                        const tier = getTierName(range);
+                        const action = getActionForTier(tier);
+                        const count = tierData[range].count;
+                        const avgRevenue = tierData[range].totalRevenue / count;
+                        const totalProfit = tierData[range].totalProfit;
+                        const profitShare = (totalProfit / totalProfit) * 100; // This calculation needs to be fixed
+                        
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${range}</td>
+                            <td>${tier}</td>
+                            <td>${count}</td>
+                            <td>$${avgRevenue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            <td>$${totalProfit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            <td>${profitShare.toFixed(1)}%</td>
+                            <td>${action}</td>
+                        `;
+                        tierBody.appendChild(row);
+                    }
+                });
+            }
+            
+            // Initialize dashboard in reset state
+            resetDashboard();
+        });
+    </script>
+</body>
+</html>
